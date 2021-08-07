@@ -9,19 +9,19 @@ fn main() {
             Arg::with_name("source")
                 .short("s")
                 .long("source")
-                .value_name("language")
+                .value_name("lang")
                 .takes_value(true)
                 .required(true)
-                .help("The source language ISO 639-1 code"),
+                .help("Source language ISO 639-1 code"),
         )
         .arg(
             Arg::with_name("target")
                 .short("t")
                 .long("target")
-                .value_name("language")
+                .value_name("lang")
                 .takes_value(true)
                 .required(true)
-                .help("The target language ISO 639-1 code"),
+                .help("Target language ISO 639-1 code"),
         )
         .arg(
             Arg::with_name("access-token")
@@ -30,7 +30,7 @@ fn main() {
                 .value_name("token")
                 .takes_value(true)
                 .required(true)
-                .help("Your access token for the Cloud Translation API"),
+                .help("Access token for the Cloud Translation API"),
         )
         .arg(
             Arg::with_name("INPUT")
