@@ -7,11 +7,15 @@ at the same time, which is particularly helpful when learning a language.
 
 ## Usage
 
-To use the Cloud Translation API you need to obtain an API key as described in
-the [documentation](https://cloud.google.com/translate/docs/setup). Next you
-have to generate the access token (valid for 60 minutes) with
-`GOOGLE_APPLICATION_CREDENTIALS=<PATH_TO_JSON> gcloud auth application-default
-print-access-token`. Then you can use the application as such:
+Requirements:
+* `ffmpeg` needs to be installed locally.
+* To use the Cloud Translation API you need to obtain an API key as described
+  in the [documentation](https://cloud.google.com/translate/docs/setup). Next
+  you have to generate the access token (valid for 60 minutes) with
+  `GOOGLE_APPLICATION_CREDENTIALS=<PATH_TO_JSON> gcloud auth
+  application-default print-access-token`.
+
+Then you can use the application as such:
 ```text
 sublate 0.1.0
 Martin Disch <martindisch@gmail.com>
