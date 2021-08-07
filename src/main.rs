@@ -1,6 +1,11 @@
 use clap::{App, Arg};
+use eyre::Result;
+use reqwest::{
+    header::{self, HeaderMap, HeaderValue},
+    Client,
+};
 
-fn main() {
+fn main() -> Result<()> {
     let matches = App::new(clap::crate_name!())
         .version(clap::crate_version!())
         .about("Translates and combine video subtitles.")
@@ -47,11 +52,19 @@ fn main() {
     let access_token = matches.value_of("access-token").unwrap();
     let files: Vec<_> = matches.values_of("INPUT").unwrap().collect();
 
-    println!(
-        "{}, {}, {}, {}",
+    let mut headers = HeaderMap::new();
+    let mut auth = HeaderValue::from_str(&format!("Bearer {}", access_token))?;
+    auth.set_sensitive(true);
+    headers.insert(header::AUTHORIZATION, auth);
+    let client = Client::builder().default_headers(headers).build()?;
+
+    // TODO: Parallelize and call for all input files
+    sublate::translate_subs(
+        files[0],
         source_language,
         target_language,
-        access_token,
-        files.join(",")
-    );
+        &client,
+    )?;
+
+    Ok(())
 }
