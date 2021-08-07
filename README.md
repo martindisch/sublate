@@ -19,7 +19,7 @@ Then you can use the application as such:
 ```text
 sublate 0.1.0
 Martin Disch <martindisch@gmail.com>
-Translates and combine video subtitles.
+Translates and combines video subtitles.
 
 USAGE:
     sublate <FILE>... --access-token <token> --source <lang> --target <lang>

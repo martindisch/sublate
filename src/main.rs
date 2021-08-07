@@ -8,7 +8,7 @@ use reqwest::{
 fn main() -> Result<()> {
     let matches = App::new(clap::crate_name!())
         .version(clap::crate_version!())
-        .about("Translates and combine video subtitles.")
+        .about("Translates and combines video subtitles.")
         .author(clap::crate_authors!())
         .arg(
             Arg::with_name("source")
