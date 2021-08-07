@@ -5,6 +5,34 @@ Google's Cloud Translation API. It creates new sub tracks for a target
 language, or even a combined track showing both the source and target language
 at the same time, which is particularly helpful when learning a language.
 
+## Usage
+
+To use the Cloud Translation API you need to obtain an API key as described in
+the [documentation](https://cloud.google.com/translate/docs/setup). Next you
+have to generate the access token (valid for 60 minutes) with
+`GOOGLE_APPLICATION_CREDENTIALS=<PATH_TO_JSON> gcloud auth application-default
+print-access-token`. Then you can use the application as such:
+```text
+sublate 0.1.0
+Martin Disch <martindisch@gmail.com>
+Translates and combine video subtitles.
+
+USAGE:
+    sublate <FILE>... --access-token <token> --source <lang> --target <lang>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -a, --access-token <token>    Access token for the Cloud Translation API
+    -s, --source <lang>           Source language ISO 639-1 code
+    -t, --target <lang>           Target language ISO 639-1 code
+
+ARGS:
+    <FILE>...    The original video file(s)
+```
+
 ## License
 Licensed under either of
 
