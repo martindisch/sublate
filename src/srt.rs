@@ -57,7 +57,7 @@ impl Iterator for SubtitleIter {
     fn next(&mut self) -> Option<Self::Item> {
         let counter = self.0.next().and_then(|s| s.parse::<u32>().ok())?;
         let timestamp = self.0.next()?;
-        let mut lines: Vec<String> = Vec::with_capacity(2);
+        let mut lines: Vec<_> = Vec::with_capacity(2);
         while let Some(s) = self.0.next() {
             if s.is_empty() {
                 break;
@@ -90,7 +90,7 @@ mod tests {
     fn no_lines() {
         let lines = vec![];
         let iter = SubtitleIter(Box::from(lines.into_iter()));
-        let subtitles: Vec<Subtitle> = iter.collect();
+        let subtitles: Vec<_> = iter.collect();
 
         assert_eq!(0, subtitles.len());
     }
@@ -99,7 +99,7 @@ mod tests {
     fn empty_line() {
         let lines = vec!["".into()];
         let iter = SubtitleIter(Box::from(lines.into_iter()));
-        let subtitles: Vec<Subtitle> = iter.collect();
+        let subtitles: Vec<_> = iter.collect();
 
         assert_eq!(0, subtitles.len());
     }
@@ -108,7 +108,7 @@ mod tests {
     fn empty_lines() {
         let lines = vec!["".into(), "".into()];
         let iter = SubtitleIter(Box::from(lines.into_iter()));
-        let subtitles: Vec<Subtitle> = iter.collect();
+        let subtitles: Vec<_> = iter.collect();
 
         assert_eq!(0, subtitles.len());
     }
@@ -122,7 +122,7 @@ mod tests {
             "Her er vannet dypere.".into(),
         ];
         let iter = SubtitleIter(Box::from(lines.into_iter()));
-        let subtitles: Vec<Subtitle> = iter.collect();
+        let subtitles: Vec<_> = iter.collect();
 
         assert_eq!(
             &[Subtitle {
@@ -152,7 +152,7 @@ mod tests {
             "".into(),
         ];
         let iter = SubtitleIter(Box::from(lines.into_iter()));
-        let subtitles: Vec<Subtitle> = iter.collect();
+        let subtitles: Vec<_> = iter.collect();
 
         assert_eq!(
             &[
