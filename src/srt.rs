@@ -1,5 +1,6 @@
 use eyre::Result;
 use std::{
+    fmt,
     fs::File,
     io::{BufRead, BufReader},
     iter::Iterator,
@@ -18,6 +19,18 @@ pub struct Subtitle {
     counter: u32,
     timestamp: String,
     lines: Vec<String>,
+}
+
+impl fmt::Display for Subtitle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}\n{}\n{}\n",
+            self.counter,
+            self.timestamp,
+            self.lines.join("\n")
+        )
+    }
 }
 
 pub struct SubtitleIter(Box<dyn Iterator<Item = String>>);

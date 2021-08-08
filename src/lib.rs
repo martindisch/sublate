@@ -14,7 +14,12 @@ pub fn translate_subs(
     target_language: &str,
     client: &Client,
 ) -> Result<()> {
-    let original_sub = extract_subtitle(file.as_ref())?;
+    let original_sub_file = extract_subtitle(file.as_ref())?;
+    let original_subs = srt::subtitles(&original_sub_file)?;
+
+    for sub in original_subs {
+        println!("{}", sub);
+    }
 
     Ok(())
 }
