@@ -6,6 +6,13 @@ use std::{
     path::Path,
 };
 
+pub fn subtitles(file: &Path) -> Result<SubtitleIter> {
+    let line_iterator = file_lines(file)?;
+    let subtitle_iterator = SubtitleIter(Box::from(line_iterator));
+
+    Ok(subtitle_iterator)
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Subtitle {
     counter: u32,
@@ -35,6 +42,15 @@ impl Iterator for SubtitleIter {
             lines,
         })
     }
+}
+
+fn file_lines(filename: &Path) -> Result<impl Iterator<Item = String>> {
+    let file = File::open(filename)?;
+    let reader = BufReader::new(file);
+
+    Ok(reader
+        .lines()
+        .map(|r| r.expect("Fatal error while reading lines")))
 }
 
 #[cfg(test)]
