@@ -12,6 +12,8 @@ use std::{
 mod srt;
 mod translation;
 
+use srt::Subtitles;
+
 pub fn translate_subs(
     file: impl AsRef<Path>,
     source_language: &str,
@@ -25,6 +27,11 @@ pub fn translate_subs(
     let translated_sub_file =
         File::create(build_subtitle_path(file.as_ref(), target_language)?)?;
     let mut translated_sub_writer = BufWriter::new(translated_sub_file);
+    let combined_sub_file = File::create(build_subtitle_path(
+        file.as_ref(),
+        &format!("{}-{}", source_language, target_language),
+    )?)?;
+    let mut combined_sub_writer = BufWriter::new(combined_sub_file);
 
     for chunk in &chunks_to_translate {
         let original_chunk: Vec<_> = chunk.collect();
@@ -36,8 +43,13 @@ pub fn translate_subs(
         )?;
 
         writeln!(translated_sub_writer, "{}", translated_chunk)?;
+
+        let combined_chunks = Subtitles(original_chunk) + translated_chunk;
+        writeln!(combined_sub_writer, "{}", combined_chunks)?;
     }
+
     translated_sub_writer.flush()?;
+    combined_sub_writer.flush()?;
 
     Ok(())
 }

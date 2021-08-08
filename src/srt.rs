@@ -4,6 +4,7 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
     iter::Iterator,
+    ops,
     path::Path,
 };
 
@@ -33,6 +34,21 @@ impl fmt::Display for Subtitle {
     }
 }
 
+impl ops::Add for Subtitle {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let mut lines = self.lines;
+        lines.extend(other.lines);
+
+        Self {
+            counter: self.counter,
+            timestamp: self.timestamp,
+            lines,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Subtitles(pub Vec<Subtitle>);
 
@@ -46,6 +62,21 @@ impl fmt::Display for Subtitles {
         }
 
         self.0[count - 1].fmt(f)
+    }
+}
+
+impl ops::Add for Subtitles {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let subs_combined = self
+            .0
+            .into_iter()
+            .zip(other.0.into_iter())
+            .map(|(sub1, sub2)| sub1 + sub2)
+            .collect();
+
+        Self(subs_combined)
     }
 }
 
@@ -174,6 +205,70 @@ mod tests {
                 }
             ],
             &subtitles[..]
+        );
+    }
+
+    #[test]
+    fn add_subtitle() {
+        let sub1 = Subtitle {
+            counter: 1,
+            timestamp: "00:00:14,600 --> 00:00:20,000".into(),
+            lines: vec![
+                "Hvis vi jobber rundt ...".into(),
+                "Her er vannet dypere.".into(),
+            ],
+        };
+        let sub2 = Subtitle {
+            counter: 2,
+            timestamp: "00:00:21,280 --> 00:00:26,960".into(),
+            lines: vec![
+                "If we work around ...".into(),
+                "Here the water is deeper.".into(),
+            ],
+        };
+
+        let sub_combined = sub1 + sub2;
+
+        assert_eq!(
+            &[
+                "Hvis vi jobber rundt ...",
+                "Her er vannet dypere.",
+                "If we work around ...",
+                "Here the water is deeper."
+            ],
+            &sub_combined.lines[..]
+        );
+    }
+
+    #[test]
+    fn add_subtitles() {
+        let subs1 = Subtitles(vec![Subtitle {
+            counter: 1,
+            timestamp: "00:00:14,600 --> 00:00:20,000".into(),
+            lines: vec![
+                "Hvis vi jobber rundt ...".into(),
+                "Her er vannet dypere.".into(),
+            ],
+        }]);
+        let subs2 = Subtitles(vec![Subtitle {
+            counter: 2,
+            timestamp: "00:00:21,280 --> 00:00:26,960".into(),
+            lines: vec![
+                "If we work around ...".into(),
+                "Here the water is deeper.".into(),
+            ],
+        }]);
+
+        let subs_combined = subs1 + subs2;
+
+        assert_eq!(
+            &[
+                "Hvis vi jobber rundt ...",
+                "Her er vannet dypere.",
+                "If we work around ...",
+                "Here the water is deeper."
+            ],
+            &subs_combined.0[0].lines[..]
         );
     }
 }
