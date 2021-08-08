@@ -13,9 +13,9 @@ pub struct Subtitle {
     lines: Vec<String>,
 }
 
-struct SubtitleIter<Iter: Iterator<Item = String>>(Iter);
+pub struct SubtitleIter(Box<dyn Iterator<Item = String>>);
 
-impl<Iter: Iterator<Item = String>> Iterator for SubtitleIter<Iter> {
+impl Iterator for SubtitleIter {
     type Item = Subtitle;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -44,7 +44,7 @@ mod tests {
     #[test]
     fn no_lines() {
         let lines = vec![];
-        let iter = SubtitleIter(lines.into_iter());
+        let iter = SubtitleIter(Box::from(lines.into_iter()));
         let subtitles: Vec<Subtitle> = iter.collect();
 
         assert_eq!(0, subtitles.len());
@@ -53,7 +53,7 @@ mod tests {
     #[test]
     fn empty_line() {
         let lines = vec!["".into()];
-        let iter = SubtitleIter(lines.into_iter());
+        let iter = SubtitleIter(Box::from(lines.into_iter()));
         let subtitles: Vec<Subtitle> = iter.collect();
 
         assert_eq!(0, subtitles.len());
@@ -62,7 +62,7 @@ mod tests {
     #[test]
     fn empty_lines() {
         let lines = vec!["".into(), "".into()];
-        let iter = SubtitleIter(lines.into_iter());
+        let iter = SubtitleIter(Box::from(lines.into_iter()));
         let subtitles: Vec<Subtitle> = iter.collect();
 
         assert_eq!(0, subtitles.len());
@@ -76,7 +76,7 @@ mod tests {
             "Hvis vi jobber rundt ...".into(),
             "Her er vannet dypere.".into(),
         ];
-        let iter = SubtitleIter(lines.into_iter());
+        let iter = SubtitleIter(Box::from(lines.into_iter()));
         let subtitles: Vec<Subtitle> = iter.collect();
 
         assert_eq!(
@@ -106,7 +106,7 @@ mod tests {
             "vågen, der er det et par problemer.".into(),
             "".into(),
         ];
-        let iter = SubtitleIter(lines.into_iter());
+        let iter = SubtitleIter(Box::from(lines.into_iter()));
         let subtitles: Vec<Subtitle> = iter.collect();
 
         assert_eq!(
