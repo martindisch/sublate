@@ -43,7 +43,7 @@ impl Iterator for SubtitleIter {
         let timestamp = self.0.next()?;
         let mut lines: Vec<String> = Vec::with_capacity(2);
         while let Some(s) = self.0.next() {
-            if s == "" {
+            if s.is_empty() {
                 break;
             }
             lines.push(s);
