@@ -109,7 +109,7 @@ mod tests {
         let subtitles: Vec<Subtitle> = iter.collect();
 
         assert_eq!(
-            vec![Subtitle {
+            &[Subtitle {
                 counter: 1,
                 timestamp: "00:00:14,600 --> 00:00:20,000".into(),
                 lines: vec![
@@ -117,7 +117,7 @@ mod tests {
                     "Her er vannet dypere.".into()
                 ],
             }],
-            subtitles
+            &subtitles[..]
         );
     }
 
@@ -139,7 +139,7 @@ mod tests {
         let subtitles: Vec<Subtitle> = iter.collect();
 
         assert_eq!(
-            vec![
+            &[
                 Subtitle {
                     counter: 1,
                     timestamp: "00:00:14,600 --> 00:00:20,000".into(),
@@ -157,7 +157,7 @@ mod tests {
                     ],
                 }
             ],
-            subtitles
+            &subtitles[..]
         );
     }
 }
