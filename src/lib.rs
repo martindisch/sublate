@@ -24,13 +24,15 @@ pub fn translate_subs(
     let original_subs = srt::subtitles(&original_sub_file)?;
     let chunks_to_translate = original_subs.chunks(128);
 
-    let translated_sub_file =
-        File::create(build_subtitle_path(file.as_ref(), target_language)?)?;
+    let translated_sub_path =
+        build_subtitle_path(file.as_ref(), target_language)?;
+    let translated_sub_file = File::create(&translated_sub_path)?;
     let mut translated_sub_writer = BufWriter::new(translated_sub_file);
-    let combined_sub_file = File::create(build_subtitle_path(
+    let combined_sub_path = build_subtitle_path(
         file.as_ref(),
         &format!("{}-{}", source_language, target_language),
-    )?)?;
+    )?;
+    let combined_sub_file = File::create(&combined_sub_path)?;
     let mut combined_sub_writer = BufWriter::new(combined_sub_file);
 
     for chunk in &chunks_to_translate {
@@ -50,6 +52,8 @@ pub fn translate_subs(
 
     translated_sub_writer.flush()?;
     combined_sub_writer.flush()?;
+
+    combine_files(file.as_ref(), &translated_sub_path, &combined_sub_path)?;
 
     Ok(())
 }
@@ -73,6 +77,58 @@ fn extract_subtitle(file: &Path, source_language: &str) -> Result<PathBuf> {
         Ok(subtitle)
     } else {
         Err(eyre!("Could not extract subtitle from {:?}", file))
+    }
+}
+
+fn combine_files(
+    video: &Path,
+    target_sub: &Path,
+    combined_sub: &Path,
+) -> Result<()> {
+    let file_name = video.file_name().ok_or_else(|| {
+        eyre!("Could not extract file name from {:?}", video)
+    })?;
+
+    let mut output_video = env::temp_dir();
+    output_video.push(file_name);
+
+    let output = Command::new("ffmpeg")
+        .args(&[
+            "-y",
+            "-i",
+            video
+                .to_str()
+                .ok_or_else(|| eyre!("Could not convert video path to str"))?,
+            "-i",
+            target_sub.to_str().ok_or_else(|| {
+                eyre!("Could not convert target sub path to str")
+            })?,
+            "-i",
+            combined_sub.to_str().ok_or_else(|| {
+                eyre!("Could not convert combined sub path to str")
+            })?,
+            "-map",
+            "0",
+            "-map",
+            "1",
+            "-map",
+            "2",
+            "-c",
+            "copy",
+            // TODO: support MKV files (-c:s srt instead of mov_text)
+            "-c:s",
+            "mov_text",
+            output_video.to_str().ok_or_else(|| {
+                eyre!("Could not convert output path to str")
+            })?,
+        ])
+        .output()?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        std::io::stdout().write_all(&output.stderr)?;
+        Err(eyre!("Could not write output to {:?}", output_video))
     }
 }
 
