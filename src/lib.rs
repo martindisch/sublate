@@ -7,8 +7,6 @@ use std::{
     process::Command,
 };
 
-use srt::Subtitle;
-
 mod srt;
 mod translation;
 
@@ -23,17 +21,15 @@ pub fn translate_subs(
     let chunks_to_translate = original_subs.chunks(128);
 
     for chunk in &chunks_to_translate {
-        let subtitles: Vec<Subtitle> = chunk.collect();
-        let texts: Vec<String> =
-            subtitles.iter().map(|s| s.lines.join(" ")).collect();
-        let translations = translation::translate(
-            &texts,
+        let original_subtitles: Vec<_> = chunk.collect();
+        let translated_subtitles = translation::translate(
+            &original_subtitles,
             source_language,
             target_language,
             client,
         )?;
 
-        println!("{}", translations.join("\n"));
+        println!("{}", translated_subtitles);
     }
 
     Ok(())

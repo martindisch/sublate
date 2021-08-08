@@ -33,6 +33,22 @@ impl fmt::Display for Subtitle {
     }
 }
 
+#[derive(Debug)]
+pub struct Subtitles(pub Vec<Subtitle>);
+
+impl fmt::Display for Subtitles {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let count = self.0.len();
+
+        for subtitle in self.0.iter().take(count - 1) {
+            subtitle.fmt(f)?;
+            writeln!(f)?;
+        }
+
+        self.0[count - 1].fmt(f)
+    }
+}
+
 pub struct SubtitleIter(Box<dyn Iterator<Item = String>>);
 
 impl Iterator for SubtitleIter {
