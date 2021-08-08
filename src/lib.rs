@@ -1,12 +1,16 @@
 use eyre::{eyre, Result};
-use reqwest::Client;
+use itertools::Itertools;
+use reqwest::blocking::Client;
 use std::{
     env,
     path::{Path, PathBuf},
     process::Command,
 };
 
+use srt::Subtitle;
+
 mod srt;
+mod translation;
 
 pub fn translate_subs(
     file: impl AsRef<Path>,
@@ -16,9 +20,20 @@ pub fn translate_subs(
 ) -> Result<()> {
     let original_sub_file = extract_subtitle(file.as_ref())?;
     let original_subs = srt::subtitles(&original_sub_file)?;
+    let chunks_to_translate = original_subs.chunks(128);
 
-    for sub in original_subs {
-        println!("{}", sub);
+    for chunk in &chunks_to_translate {
+        let subtitles: Vec<Subtitle> = chunk.collect();
+        let texts: Vec<String> =
+            subtitles.iter().map(|s| s.lines.join(" ")).collect();
+        let translations = translation::translate(
+            &texts,
+            source_language,
+            target_language,
+            client,
+        )?;
+
+        println!("{}", translations.join("\n"));
     }
 
     Ok(())

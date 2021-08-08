@@ -1,8 +1,8 @@
 use clap::{App, Arg};
 use eyre::Result;
 use reqwest::{
+    blocking::Client,
     header::{self, HeaderMap, HeaderValue},
-    Client,
 };
 
 fn main() -> Result<()> {

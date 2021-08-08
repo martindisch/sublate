@@ -16,9 +16,9 @@ pub fn subtitles(file: &Path) -> Result<SubtitleIter> {
 
 #[derive(Debug, PartialEq)]
 pub struct Subtitle {
-    counter: u32,
-    timestamp: String,
-    lines: Vec<String>,
+    pub counter: u32,
+    pub timestamp: String,
+    pub lines: Vec<String>,
 }
 
 impl fmt::Display for Subtitle {
