@@ -4,7 +4,7 @@ use reqwest::blocking::Client;
 use std::{
     env,
     fs::File,
-    io::{BufWriter, Write},
+    io::{self, BufWriter, Write},
     path::{Path, PathBuf},
     process::Command,
 };
@@ -76,6 +76,7 @@ fn extract_subtitle(file: &Path, source_language: &str) -> Result<PathBuf> {
     if output.status.success() {
         Ok(subtitle)
     } else {
+        io::stdout().write_all(&output.stderr)?;
         Err(eyre!("Could not extract subtitle from {:?}", file))
     }
 }
@@ -127,7 +128,7 @@ fn combine_files(
     if output.status.success() {
         Ok(())
     } else {
-        std::io::stdout().write_all(&output.stderr)?;
+        io::stdout().write_all(&output.stderr)?;
         Err(eyre!("Could not write output to {:?}", output_video))
     }
 }
