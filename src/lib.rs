@@ -6,6 +6,8 @@ use std::{
     process::Command,
 };
 
+mod srt;
+
 pub fn translate_subs(
     file: impl AsRef<Path>,
     source_language: &str,
