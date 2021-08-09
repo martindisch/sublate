@@ -58,7 +58,6 @@ fn main() -> Result<()> {
     headers.insert(header::AUTHORIZATION, auth);
     let client = Client::builder().default_headers(headers).build()?;
 
-    // TODO: parallelize? Seems more than fast enough though
     for file in files {
         println!("Translating {}", file);
         sublate::translate_subs(
