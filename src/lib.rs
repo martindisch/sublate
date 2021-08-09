@@ -4,11 +4,11 @@ use reqwest::blocking::Client;
 use std::{
     env,
     fs::File,
-    io::{self, BufWriter, Write},
+    io::{BufWriter, Write},
     path::{Path, PathBuf},
-    process::Command,
 };
 
+mod ffmpeg;
 mod srt;
 mod translation;
 
@@ -20,7 +20,10 @@ pub fn translate_subs(
     target_language: &str,
     client: &Client,
 ) -> Result<()> {
-    let original_sub_file = extract_subtitle(file.as_ref(), source_language)?;
+    let original_sub_file =
+        build_subtitle_path(file.as_ref(), source_language)?;
+    ffmpeg::extract_subtitle(file.as_ref(), &original_sub_file)?;
+
     let original_subs = srt::subtitles(&original_sub_file)?;
     let chunks_to_translate = original_subs.chunks(128);
 
@@ -53,84 +56,13 @@ pub fn translate_subs(
     translated_sub_writer.flush()?;
     combined_sub_writer.flush()?;
 
-    combine_files(file.as_ref(), &translated_sub_path, &combined_sub_path)?;
+    ffmpeg::combine_files(
+        file.as_ref(),
+        &translated_sub_path,
+        &combined_sub_path,
+    )?;
 
     Ok(())
-}
-
-fn extract_subtitle(file: &Path, source_language: &str) -> Result<PathBuf> {
-    let subtitle = build_subtitle_path(file, source_language)?;
-
-    let output = Command::new("ffmpeg")
-        .args(&[
-            "-y",
-            "-i",
-            file.to_str()
-                .ok_or_else(|| eyre!("Could not convert input path to str"))?,
-            subtitle
-                .to_str()
-                .ok_or_else(|| eyre!("Could not convert sub path to str"))?,
-        ])
-        .output()?;
-
-    if output.status.success() {
-        Ok(subtitle)
-    } else {
-        io::stdout().write_all(&output.stderr)?;
-        Err(eyre!("Could not extract subtitle from {:?}", file))
-    }
-}
-
-fn combine_files(
-    video: &Path,
-    target_sub: &Path,
-    combined_sub: &Path,
-) -> Result<()> {
-    let file_name = video.file_name().ok_or_else(|| {
-        eyre!("Could not extract file name from {:?}", video)
-    })?;
-
-    let mut output_video = env::temp_dir();
-    output_video.push(file_name);
-
-    let output = Command::new("ffmpeg")
-        .args(&[
-            "-y",
-            "-i",
-            video
-                .to_str()
-                .ok_or_else(|| eyre!("Could not convert video path to str"))?,
-            "-i",
-            target_sub.to_str().ok_or_else(|| {
-                eyre!("Could not convert target sub path to str")
-            })?,
-            "-i",
-            combined_sub.to_str().ok_or_else(|| {
-                eyre!("Could not convert combined sub path to str")
-            })?,
-            "-map",
-            "0",
-            "-map",
-            "1",
-            "-map",
-            "2",
-            "-c",
-            "copy",
-            // TODO: support MKV files (-c:s srt instead of mov_text)
-            "-c:s",
-            "mov_text",
-            output_video.to_str().ok_or_else(|| {
-                eyre!("Could not convert output path to str")
-            })?,
-        ])
-        .output()?;
-
-    if output.status.success() {
-        Ok(())
-    } else {
-        io::stdout().write_all(&output.stderr)?;
-        Err(eyre!("Could not write output to {:?}", output_video))
-    }
 }
 
 fn build_subtitle_path(file: &Path, language: &str) -> Result<PathBuf> {
