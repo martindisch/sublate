@@ -20,23 +20,23 @@ pub fn translate_subs(
     target_language: &str,
     client: &Client,
 ) -> Result<()> {
-    let original_sub_file =
-        build_subtitle_path(file.as_ref(), source_language)?;
-    ffmpeg::extract_subtitle(file.as_ref(), &original_sub_file)?;
+    let filename = get_file_stem(file.as_ref())?;
+    let output_dir = env::temp_dir();
 
-    let original_subs = srt::subtitles(&original_sub_file)?;
+    let original_sub =
+        build_subtitle_path(&output_dir, &filename, source_language);
+    ffmpeg::extract_subtitle(file.as_ref(), &original_sub)?;
+
+    let original_subs = srt::subtitles(&original_sub)?;
     let chunks_to_translate = original_subs.chunks(128);
 
-    let translated_sub_path =
-        build_subtitle_path(file.as_ref(), target_language)?;
-    let translated_sub_file = File::create(&translated_sub_path)?;
-    let mut translated_sub_writer = BufWriter::new(translated_sub_file);
-    let combined_sub_path = build_subtitle_path(
-        file.as_ref(),
+    let (translated_sub, mut translated_sub_writer) =
+        build_sub_writer(&output_dir, &filename, target_language)?;
+    let (combined_sub, mut combined_sub_writer) = build_sub_writer(
+        &output_dir,
+        &filename,
         &format!("{}-{}", source_language, target_language),
     )?;
-    let combined_sub_file = File::create(&combined_sub_path)?;
-    let mut combined_sub_writer = BufWriter::new(combined_sub_file);
 
     for chunk in &chunks_to_translate {
         let original_chunk = Subtitles(chunk.collect());
@@ -56,24 +56,38 @@ pub fn translate_subs(
     translated_sub_writer.flush()?;
     combined_sub_writer.flush()?;
 
-    ffmpeg::combine_files(
-        file.as_ref(),
-        &translated_sub_path,
-        &combined_sub_path,
-    )?;
+    ffmpeg::combine_files(file.as_ref(), &translated_sub, &combined_sub)?;
 
     Ok(())
 }
 
-fn build_subtitle_path(file: &Path, language: &str) -> Result<PathBuf> {
-    let file_stem = file
+fn get_file_stem(path: &Path) -> Result<String> {
+    Ok(path
         .file_stem()
-        .ok_or_else(|| eyre!("Could not extract file stem from {:?}", file))?
+        .ok_or_else(|| eyre!("Could not extract file stem from {:?}", path))?
         .to_str()
-        .ok_or_else(|| eyre!("Could not convert OsStr to str"))?;
+        .ok_or_else(|| eyre!("Could not convert OsStr for {:?}", path))?
+        .to_string())
+}
 
-    let mut subtitle = env::temp_dir();
-    subtitle.push(format!("{}_{}.srt", file_stem, language));
+fn build_subtitle_path(
+    directory: &Path,
+    filename: &str,
+    suffix: &str,
+) -> PathBuf {
+    let mut path = directory.to_path_buf();
+    path.push(format!("{}_{}.srt", filename, suffix));
 
-    Ok(subtitle)
+    path
+}
+
+fn build_sub_writer(
+    directory: &Path,
+    filename: &str,
+    suffix: &str,
+) -> Result<(PathBuf, BufWriter<File>)> {
+    let path = build_subtitle_path(directory, filename, suffix);
+    let file = File::create(&path)?;
+
+    Ok((path, BufWriter::new(file)))
 }
