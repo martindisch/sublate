@@ -39,7 +39,7 @@ pub fn translate_subs(
     let mut combined_sub_writer = BufWriter::new(combined_sub_file);
 
     for chunk in &chunks_to_translate {
-        let original_chunk: Vec<_> = chunk.collect();
+        let original_chunk = Subtitles(chunk.collect());
         let translated_chunk = translation::translate(
             &original_chunk,
             source_language,
@@ -49,7 +49,7 @@ pub fn translate_subs(
 
         writeln!(translated_sub_writer, "{}", translated_chunk)?;
 
-        let combined_chunks = Subtitles(original_chunk) + translated_chunk;
+        let combined_chunks = original_chunk + translated_chunk;
         writeln!(combined_sub_writer, "{}", combined_chunks)?;
     }
 

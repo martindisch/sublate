@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 use crate::srt::{Subtitle, Subtitles};
 
 pub fn translate(
-    subtitles: &[Subtitle],
+    subtitles: &Subtitles,
     source_language: &str,
     target_language: &str,
     client: &Client,
 ) -> Result<Subtitles> {
-    let texts: Vec<_> = subtitles.iter().map(Subtitle::to_html).collect();
+    let texts: Vec<_> = subtitles.0.iter().map(Subtitle::to_html).collect();
     let request = TranslationRequest {
         q: &texts,
         format: "html",
@@ -29,7 +29,7 @@ pub fn translate(
         .data
         .translations
         .iter()
-        .zip(subtitles)
+        .zip(&subtitles.0)
         .map(|(translation, original)| {
             Subtitle::from_html(
                 original.counter,
