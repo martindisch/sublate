@@ -8,11 +8,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use srt::Subtitles;
+
 mod ffmpeg;
 mod srt;
 mod translation;
-
-use srt::Subtitles;
 
 pub fn translate_subs(
     file: impl AsRef<Path>,
@@ -49,8 +49,8 @@ pub fn translate_subs(
 
         writeln!(translated_sub_writer, "{}", translated_chunk)?;
 
-        let combined_chunks = original_chunk + translated_chunk;
-        writeln!(combined_sub_writer, "{}", combined_chunks)?;
+        let combined_chunk = original_chunk + translated_chunk;
+        writeln!(combined_sub_writer, "{}", combined_chunk)?;
     }
 
     translated_sub_writer.flush()?;
