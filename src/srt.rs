@@ -9,10 +9,10 @@ use std::{
 };
 
 pub fn subtitles(file: &Path) -> Result<SubtitleIter> {
-    let line_iterator = file_lines(file)?;
-    let subtitle_iterator = SubtitleIter(Box::from(line_iterator));
+    let line_iter = file_lines(file)?;
+    let sub_iter = SubtitleIter(Box::from(line_iter));
 
-    Ok(subtitle_iterator)
+    Ok(sub_iter)
 }
 
 #[derive(Debug, PartialEq)]
@@ -104,8 +104,8 @@ impl Iterator for SubtitleIter {
     }
 }
 
-fn file_lines(filename: &Path) -> Result<impl Iterator<Item = String>> {
-    let file = File::open(filename)?;
+fn file_lines(path: &Path) -> Result<impl Iterator<Item = String>> {
+    let file = File::open(path)?;
     let reader = BufReader::new(file);
 
     Ok(reader

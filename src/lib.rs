@@ -14,25 +14,25 @@ mod ffmpeg;
 mod srt;
 mod translation;
 
-pub fn translate_subs(
-    file: impl AsRef<Path>,
+pub fn translate_subtitle(
+    video: impl AsRef<Path>,
     source_language: &str,
     target_language: &str,
     client: &Client,
 ) -> Result<()> {
-    let filename = get_file_stem(file.as_ref())?;
+    let filename = get_file_stem(video.as_ref())?;
     let output_dir = env::temp_dir();
 
     let original_sub =
         build_subtitle_path(&output_dir, &filename, source_language);
-    ffmpeg::extract_subtitle(file.as_ref(), &original_sub)?;
+    ffmpeg::extract_subtitle(video.as_ref(), &original_sub)?;
 
-    let original_subs = srt::subtitles(&original_sub)?;
-    let chunks_to_translate = original_subs.chunks(128);
+    let original_subtitles_iter = srt::subtitles(&original_sub)?;
+    let chunks_to_translate = original_subtitles_iter.chunks(128);
 
     let (translated_sub, mut translated_sub_writer) =
-        build_sub_writer(&output_dir, &filename, target_language)?;
-    let (combined_sub, mut combined_sub_writer) = build_sub_writer(
+        build_subtitle_writer(&output_dir, &filename, target_language)?;
+    let (combined_sub, mut combined_sub_writer) = build_subtitle_writer(
         &output_dir,
         &filename,
         &format!("{}-{}", source_language, target_language),
@@ -56,7 +56,12 @@ pub fn translate_subs(
     translated_sub_writer.flush()?;
     combined_sub_writer.flush()?;
 
-    ffmpeg::combine_files(file.as_ref(), &translated_sub, &combined_sub)?;
+    ffmpeg::combine_files(
+        video.as_ref(),
+        &output_dir,
+        &translated_sub,
+        &combined_sub,
+    )?;
 
     Ok(())
 }
@@ -81,7 +86,7 @@ fn build_subtitle_path(
     path
 }
 
-fn build_sub_writer(
+fn build_subtitle_writer(
     directory: &Path,
     filename: &str,
     suffix: &str,

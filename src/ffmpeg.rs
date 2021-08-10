@@ -1,17 +1,17 @@
 use eyre::{eyre, Result};
 use std::{
-    env,
     io::{self, Write},
     path::Path,
     process::Command,
 };
 
-pub fn extract_subtitle(file: &Path, output: &Path) -> Result<()> {
+pub fn extract_subtitle(video: &Path, output: &Path) -> Result<()> {
     let ffmpeg_output = Command::new("ffmpeg")
         .args(&[
             "-y",
             "-i",
-            file.to_str()
+            video
+                .to_str()
                 .ok_or_else(|| eyre!("Could not convert input path to str"))?,
             output
                 .to_str()
@@ -23,23 +23,24 @@ pub fn extract_subtitle(file: &Path, output: &Path) -> Result<()> {
         Ok(())
     } else {
         io::stdout().write_all(&ffmpeg_output.stderr)?;
-        Err(eyre!("Could not extract subtitle from {:?}", file))
+        Err(eyre!("Could not extract subtitle from {:?}", video))
     }
 }
 
 pub fn combine_files(
     video: &Path,
+    output_dir: &Path,
     target_sub: &Path,
     combined_sub: &Path,
 ) -> Result<()> {
-    let file_name = video.file_name().ok_or_else(|| {
+    let filename = video.file_name().ok_or_else(|| {
         eyre!("Could not extract file name from {:?}", video)
     })?;
 
-    let mut output_video = env::temp_dir();
-    output_video.push(file_name);
+    let mut output = output_dir.to_path_buf();
+    output.push(filename);
 
-    let output = Command::new("ffmpeg")
+    let ffmpeg_output = Command::new("ffmpeg")
         .args(&[
             "-y",
             "-i",
@@ -65,16 +66,16 @@ pub fn combine_files(
             // TODO: support MKV files (-c:s srt instead of mov_text)
             "-c:s",
             "mov_text",
-            output_video.to_str().ok_or_else(|| {
+            output.to_str().ok_or_else(|| {
                 eyre!("Could not convert output path to str")
             })?,
         ])
         .output()?;
 
-    if output.status.success() {
+    if ffmpeg_output.status.success() {
         Ok(())
     } else {
-        io::stdout().write_all(&output.stderr)?;
-        Err(eyre!("Could not write output to {:?}", output_video))
+        io::stdout().write_all(&ffmpeg_output.stderr)?;
+        Err(eyre!("Could not write output to {:?}", output))
     }
 }

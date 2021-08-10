@@ -50,7 +50,7 @@ fn main() -> Result<()> {
     let source_language = matches.value_of("source").unwrap();
     let target_language = matches.value_of("target").unwrap();
     let access_token = matches.value_of("access-token").unwrap();
-    let files: Vec<_> = matches.values_of("INPUT").unwrap().collect();
+    let videos: Vec<_> = matches.values_of("INPUT").unwrap().collect();
 
     let mut headers = HeaderMap::new();
     let mut auth = HeaderValue::from_str(&format!("Bearer {}", access_token))?;
@@ -58,10 +58,10 @@ fn main() -> Result<()> {
     headers.insert(header::AUTHORIZATION, auth);
     let client = Client::builder().default_headers(headers).build()?;
 
-    for file in files {
-        println!("Translating {}", file);
-        sublate::translate_subs(
-            file,
+    for video in videos {
+        println!("Translating {}", video);
+        sublate::translate_subtitle(
+            video,
             source_language,
             target_language,
             &client,
