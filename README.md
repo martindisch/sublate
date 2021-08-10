@@ -37,6 +37,10 @@ ARGS:
     <FILE>...    The original video file(s)
 ```
 
+The extracted and translated subtitles as well as the combined video files
+containing all existing and new subtitles will be dumped into the temporary
+directory of your operating system, for example `/tmp` on Unix.
+
 ## License
 Licensed under either of
 
