@@ -11,38 +11,21 @@ pub fn translate(
     target_language: &str,
     client: &Client,
 ) -> Result<Subtitles> {
-    let texts: Vec<_> = subtitles.0.iter().map(Subtitle::to_html).collect();
     let request = TranslationRequest {
-        q: &texts,
+        q: &subtitles.to_translatable_texts(),
         format: "html",
         source: source_language,
         target: target_language,
     };
 
-    let response: TranslationResponse = client
+    let response = client
         .post("https://translation.googleapis.com/language/translate/v2")
         .json(&request)
         .send()?
         .json()?;
+    let translated_subs = Subtitles::from(response, subtitles)?;
 
-    let translated_subs = response
-        .data
-        .translations
-        .iter()
-        .zip(&subtitles.0)
-        .map(|(translation, original)| {
-            Subtitle::from_html(
-                original.counter,
-                original.timestamp.clone(),
-                &html_escape::decode_html_entities(
-                    &translation.translated_text,
-                )
-                .to_string(),
-            )
-        })
-        .collect::<Result<Vec<_>>>()?;
-
-    Ok(Subtitles(translated_subs))
+    Ok(translated_subs)
 }
 
 #[derive(Debug, Serialize)]
@@ -72,6 +55,12 @@ struct Translation {
     translated_text: String,
 }
 
+impl Translation {
+    fn decode(&self) -> String {
+        html_escape::decode_html_entities(&self.translated_text).to_string()
+    }
+}
+
 impl Subtitle {
     fn to_html(&self) -> String {
         self.lines
@@ -92,6 +81,33 @@ impl Subtitle {
             timestamp,
             lines,
         })
+    }
+}
+
+impl Subtitles {
+    fn to_translatable_texts(&self) -> Vec<String> {
+        self.0.iter().map(Subtitle::to_html).collect()
+    }
+
+    fn from(
+        response: TranslationResponse,
+        original: &Subtitles,
+    ) -> Result<Self> {
+        let translated_subs = response
+            .data
+            .translations
+            .iter()
+            .zip(&original.0)
+            .map(|(translation, original)| {
+                Subtitle::from_html(
+                    original.counter,
+                    original.timestamp.clone(),
+                    &translation.decode(),
+                )
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(Subtitles(translated_subs))
     }
 }
 
