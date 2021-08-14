@@ -29,9 +29,9 @@ pub fn extract_subtitle(video: &Path, output: &Path) -> Result<()> {
 
 pub fn combine_files(
     video: &Path,
-    output_dir: &Path,
     target_sub: &Path,
     combined_sub: &Path,
+    output_dir: &Path,
 ) -> Result<()> {
     let filename = video.file_name().ok_or_else(|| {
         eyre!("Could not extract file name from {:?}", video)

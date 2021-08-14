@@ -58,9 +58,9 @@ pub fn translate_subtitle(
 
     ffmpeg::combine_files(
         video.as_ref(),
-        &output_dir,
         &translated_sub,
         &combined_sub,
+        &output_dir,
     )?;
 
     Ok(())
