@@ -89,11 +89,11 @@ impl Iterator for SubtitleIter {
         let counter = self.0.next().and_then(|s| s.parse::<u32>().ok())?;
         let timestamp = self.0.next()?;
         let mut lines: Vec<_> = Vec::with_capacity(2);
-        for s in &mut self.0 {
-            if s.is_empty() {
+        for line in &mut self.0 {
+            if line.is_empty() {
                 break;
             }
-            lines.push(s);
+            lines.push(line);
         }
 
         Some(Subtitle {
