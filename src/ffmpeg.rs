@@ -36,6 +36,14 @@ pub fn combine_files(
     let filename = video.file_name().ok_or_else(|| {
         eyre!("Could not extract file name from {:?}", video)
     })?;
+    let extension = video.extension().ok_or_else(|| {
+        eyre!("Could not extract extension from {:?}", video)
+    })?;
+    let subtitle_arg = if extension == "mkv" {
+        "srt"
+    } else {
+        "mov_text"
+    };
 
     let mut output = output_dir.to_path_buf();
     output.push(filename);
@@ -63,9 +71,8 @@ pub fn combine_files(
             "2",
             "-c",
             "copy",
-            // TODO: support MKV files (-c:s srt instead of mov_text)
             "-c:s",
-            "mov_text",
+            subtitle_arg,
             output.to_str().ok_or_else(|| {
                 eyre!("Could not convert output path to str")
             })?,
