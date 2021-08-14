@@ -40,11 +40,10 @@ pub fn translate_subtitle(
 
     for chunk in &chunks_to_translate {
         let original_chunk = Subtitles(chunk.collect());
-        let translated_chunk = translation::translate(
-            &original_chunk,
+        let translated_chunk = original_chunk.translate(
+            client,
             source_language,
             target_language,
-            client,
         )?;
 
         writeln!(translated_sub_writer, "{}", translated_chunk)?;

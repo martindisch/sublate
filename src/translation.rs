@@ -5,27 +5,77 @@ use serde::{Deserialize, Serialize};
 
 use crate::srt::{Subtitle, Subtitles};
 
-pub fn translate(
-    subtitles: &Subtitles,
-    source_language: &str,
-    target_language: &str,
-    client: &Client,
-) -> Result<Subtitles> {
-    let request = TranslationRequest {
-        q: &subtitles.to_translatable_texts(),
-        format: "html",
-        source: source_language,
-        target: target_language,
-    };
+impl Subtitles {
+    pub fn translate(
+        &self,
+        client: &Client,
+        source_language: &str,
+        target_language: &str,
+    ) -> Result<Subtitles> {
+        let request = TranslationRequest {
+            q: &self.to_translatable_texts(),
+            format: "html",
+            source: source_language,
+            target: target_language,
+        };
 
-    let response = client
-        .post("https://translation.googleapis.com/language/translate/v2")
-        .json(&request)
-        .send()?
-        .json()?;
-    let translated_subs = Subtitles::from(response, subtitles)?;
+        let response = client
+            .post("https://translation.googleapis.com/language/translate/v2")
+            .json(&request)
+            .send()?
+            .json()?;
+        let translated_subs = Subtitles::from(response, self)?;
 
-    Ok(translated_subs)
+        Ok(translated_subs)
+    }
+
+    fn to_translatable_texts(&self) -> Vec<String> {
+        self.0.iter().map(Subtitle::to_html).collect()
+    }
+
+    fn from(
+        response: TranslationResponse,
+        original: &Subtitles,
+    ) -> Result<Self> {
+        let translated_subs = response
+            .data
+            .translations
+            .iter()
+            .zip(&original.0)
+            .map(|(translation, original)| {
+                Subtitle::from_html(
+                    original.counter,
+                    original.timestamp.clone(),
+                    &translation.decode(),
+                )
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(Subtitles(translated_subs))
+    }
+}
+
+impl Subtitle {
+    fn to_html(&self) -> String {
+        self.lines
+            .iter()
+            .map(|s| format!("<span>{}</span>", s))
+            .collect()
+    }
+
+    fn from_html(counter: u32, timestamp: String, html: &str) -> Result<Self> {
+        let regex = Regex::new(r"<span>(.+?)</span>")?;
+        let lines: Vec<_> = regex
+            .captures_iter(html)
+            .map(|c| c[1].to_string())
+            .collect();
+
+        Ok(Self {
+            counter,
+            timestamp,
+            lines,
+        })
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -58,56 +108,6 @@ struct Translation {
 impl Translation {
     fn decode(&self) -> String {
         html_escape::decode_html_entities(&self.translated_text).to_string()
-    }
-}
-
-impl Subtitle {
-    fn to_html(&self) -> String {
-        self.lines
-            .iter()
-            .map(|s| format!("<span>{}</span>", s))
-            .collect()
-    }
-
-    fn from_html(counter: u32, timestamp: String, html: &str) -> Result<Self> {
-        let regex = Regex::new(r"<span>(.+?)</span>")?;
-        let lines: Vec<_> = regex
-            .captures_iter(html)
-            .map(|c| c[1].to_string())
-            .collect();
-
-        Ok(Self {
-            counter,
-            timestamp,
-            lines,
-        })
-    }
-}
-
-impl Subtitles {
-    fn to_translatable_texts(&self) -> Vec<String> {
-        self.0.iter().map(Subtitle::to_html).collect()
-    }
-
-    fn from(
-        response: TranslationResponse,
-        original: &Subtitles,
-    ) -> Result<Self> {
-        let translated_subs = response
-            .data
-            .translations
-            .iter()
-            .zip(&original.0)
-            .map(|(translation, original)| {
-                Subtitle::from_html(
-                    original.counter,
-                    original.timestamp.clone(),
-                    &translation.decode(),
-                )
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(Subtitles(translated_subs))
     }
 }
 
